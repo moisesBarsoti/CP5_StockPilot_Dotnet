@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using StockPilot.Application.Interfaces.Repositories;
 using StockPilot.Domain.Entities;
 using StockPilot.Infrastructure.Data;
+using StockPilot.Application.Common.Results;
+using StockPilot.Domain.Exceptions;
 
 namespace StockPilot.Infrastructure.Repositories;
 
@@ -21,11 +23,33 @@ public class SupplierRepository : ISupplierRepository
             .ToListAsync();
     }
 
-    public async Task<Supplier?> GetByIdAsync(Guid id)
+    
+    public async Task<Supplier> GetByIdAsync(Guid id)
     {
-        return await _context.Suppliers
+        var supplier = await _context.Suppliers
+            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id);
+
+        return supplier ?? throw new SupplierNotFoundException(id);
     }
+    
+    
+    public async Task<OperationResult<bool>> CheckEmailAvailabilityAsync(string email)
+    {
+        var exists = await _context.Suppliers.AsNoTracking().AnyAsync(s => s.Email == email);
+
+        if (exists)
+        {
+            return OperationResult<bool>.Failure(
+                "SUPPLIER_EMAIL_ALREADY_EXISTS",
+                "Já existe um fornecedor cadastrado com este e-mail."
+            );
+        }
+
+        return OperationResult<bool>.Success(true);
+    }
+
+
 
     public async Task AddAsync(Supplier supplier)
     {
