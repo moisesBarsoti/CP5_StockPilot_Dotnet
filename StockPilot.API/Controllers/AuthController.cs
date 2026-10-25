@@ -26,17 +26,44 @@ public class AuthController : ControllerBase
         _environment = environment;
     }
 
+    /// <summary>
+    /// Autentica um usuário de demonstração.
+    /// </summary>
+    /// <remarks>
+    /// Valida as credenciais dos usuários ADMIN ou VIEWER e,
+    /// quando válidas, gera um token JWT para acesso à API.
+    ///
+    /// O login demonstrativo está disponível em Development
+    /// ou quando habilitado explicitamente por configuração.
+    /// </remarks>
+    /// <param name="request">
+    /// Credenciais do usuário utilizadas na autenticação.
+    /// </param>
+    /// <response code="200">
+    /// Autenticação realizada e token JWT gerado.
+    /// </response>
+    /// <response code="400">
+    /// Dados da requisição inválidos.
+    /// </response>
+    /// <response code="401">
+    /// Usuário ou senha inválidos.
+    /// </response>
+    /// <response code="404">
+    /// Login demonstrativo desabilitado no ambiente.
+    /// </response>
     [AllowAnonymous]
     [HttpPost("login")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult Login([FromBody] LoginRequest request)
     {
-        
         if (!_environment.IsDevelopment() &&
             !_configuration.GetValue<bool>("DemoAuth:Enabled"))
         {
             return NotFound();
         }
-
 
         var username = request.Username.Trim().ToLowerInvariant();
 
