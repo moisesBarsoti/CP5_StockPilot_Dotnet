@@ -3,6 +3,8 @@ using StockPilot.Infrastructure.Data;
 using StockPilot.Infrastructure.Repositories;
 using StockPilot.Application.Interfaces.External;
 using StockPilot.Infrastructure.External;
+using StockPilot.Application.Interfaces.Services;
+using StockPilot.Application.Services;
 
 namespace StockPilot.API.Extensions;
 
@@ -13,6 +15,8 @@ public static class StockPilotServiceCollectionExtensions
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<ISupplierRepository, SupplierRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<ISupplierService, SupplierService>();
+        services.AddScoped<IProductService, ProductService>();
         
         services.AddHttpClient<IZipCodeService, ViaCepService>(
             client =>
