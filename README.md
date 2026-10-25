@@ -36,6 +36,7 @@
 - [⚙️ Como executar](#️-como-executar)
 - [🐳 Docker](#-docker)
 - [🌐 Ambiente publicado no Render](#-ambiente-publicado-no-render)
+- [🎥 Vídeo de apresentação](#-vídeo-de-apresentação)
 - [📊 Observabilidade e logs com Serilog](#-observabilidade-e-logs-com-serilog)
 - [🧪 Testes](#-testes)
 - [🎬 Demonstração da API](#-demonstração-da-api)
@@ -644,6 +645,20 @@ No plano **Free**, a instância pode ser suspensa quando ficar inativa; a primei
 
 ---
 
+## 🎥 Vídeo de apresentação
+
+Apresentação em vídeo do **Checkpoint 5 (CP5) de .NET da FIAP**, demonstrando o projeto StockPilot API e suas principais implementações.
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=fX3qrx8DfOw">
+    <img src="https://github.com/user-attachments/assets/d7d17ef5-bfac-4fbb-9970-bbdded4c7c87" alt="Capa do vídeo de apresentação do StockPilot API — CP5 .NET FIAP" width="800" />
+  </a>
+</div>
+
+**▶️ [Assistir ao vídeo no YouTube — StockPilot API | CP5 .NET FIAP](https://www.youtube.com/watch?v=fX3qrx8DfOw)**
+
+---
+
 ## 📊 Observabilidade e logs com Serilog
 
 O StockPilot utiliza **Serilog.AspNetCore 8.0.3** para gerar logs estruturados e facilitar o acompanhamento das requisições HTTP. A configuração fica em `StockPilot.API/Configurations/SerilogConfiguration.cs` e é registrada no `Program.cs` por `SerilogConfiguration.Configure(builder.Host)`.
@@ -751,6 +766,8 @@ Os arquivos de cobertura serão gerados nas pastas `TestResults/`. Não são inf
 ---
 
 ## 🎬 Demonstração da API
+
+O vídeo da apresentação está disponível na seção [Vídeo de apresentação](#-vídeo-de-apresentação).
 
 Sugestão de sequência para o vídeo acadêmico de até cinco minutos, utilizando o Swagger como interface de demonstração:
 
