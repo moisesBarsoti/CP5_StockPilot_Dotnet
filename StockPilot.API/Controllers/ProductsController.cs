@@ -1,4 +1,4 @@
-
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StockPilot.Application.DTOs.Product;
 using StockPilot.Application.Interfaces.Services;
@@ -6,6 +6,7 @@ using StockPilot.Application.Interfaces.Services;
 namespace StockPilot.API.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/products")]
 public class ProductsController : ControllerBase
 {
@@ -17,6 +18,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> Create(
         [FromBody] ProductRequest request)
     {
