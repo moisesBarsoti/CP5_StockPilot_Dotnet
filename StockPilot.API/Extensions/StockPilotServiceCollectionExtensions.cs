@@ -6,6 +6,7 @@ using StockPilot.Infrastructure.External;
 using StockPilot.Application.Interfaces.Services;
 using StockPilot.Application.Services;
 
+
 namespace StockPilot.API.Extensions;
 
 public static class StockPilotServiceCollectionExtensions
@@ -18,14 +19,25 @@ public static class StockPilotServiceCollectionExtensions
         services.AddScoped<ISupplierService, SupplierService>();
         services.AddScoped<IProductService, ProductService>();
         
+        
         services.AddHttpClient<IZipCodeService, ViaCepService>(
-            client =>
+                client =>
+                {
+                    client.BaseAddress = new Uri("https://viacep.com.br/ws/");
+                }
+            )
+            .AddStandardResilienceHandler(options =>
             {
-                client.BaseAddress = new Uri("https://viacep.com.br/ws/");
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(8);
 
-                client.Timeout = TimeSpan.FromSeconds(5);
-            }
-        );
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(3);
+
+                options.Retry.MaxRetryAttempts = 2;
+
+                options.Retry.Delay = TimeSpan.FromMilliseconds(250);
+
+                options.CircuitBreaker.MinimumThroughput = 10;
+            });
 
         
         return services;
