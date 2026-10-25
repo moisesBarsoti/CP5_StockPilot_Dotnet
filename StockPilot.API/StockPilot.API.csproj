@@ -23,7 +23,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>StockPilot.API</RootNamespace>
-      <UserSecretsId>1dda4f60-bf04-495d-8e0e-bfabf35df8ac</UserSecretsId>
+        <UserSecretsId>1dda4f60-bf04-495d-8e0e-bfabf35df8ac</UserSecretsId>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
 </Project>
