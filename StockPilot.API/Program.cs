@@ -3,6 +3,7 @@ using StockPilot.Infrastructure.Data;
 using StockPilot.API.Extensions;
 using Microsoft.AspNetCore.Diagnostics;
 using StockPilot.API.Exceptions;
+using StockPilot.API.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,8 +29,15 @@ builder.Services.AddDbContext<StockPilotDbContext>(options => options.UseOracle(
 builder.Services.AddStockPilotServices();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+JwtConfiguration.Configure(
+    builder.Services,
+    builder.Configuration
+);
 
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseExceptionHandler(new ExceptionHandlerOptions
 {
