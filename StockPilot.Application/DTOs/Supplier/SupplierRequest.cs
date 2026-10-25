@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace StockPilot.Application.DTOs.Supplier;
 
-public class CreateSupplierRequest
+public class SupplierRequest
 {
     [Required]
     [MaxLength(150)]
