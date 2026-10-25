@@ -33,8 +33,15 @@ JwtConfiguration.Configure(
     builder.Services,
     builder.Configuration
 );
+builder.Services.AddStockPilotSwagger();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
