@@ -3,13 +3,14 @@
 # 📦 StockPilot API
 
 **API REST para gerenciamento de produtos, fornecedores e controle básico de estoque**  
-**ASP.NET Core 8 · Clean Architecture · Oracle Database · JWT · ViaCEP · Swagger/OpenAPI · Docker · Render**
+**ASP.NET Core 8 · Clean Architecture · Oracle Database · JWT · ViaCEP · Swagger/OpenAPI · Serilog · Docker · Render**
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![C%23](https://img.shields.io/badge/C%23-API-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
 [![Oracle](https://img.shields.io/badge/Oracle-Database-F80000?logo=oracle&logoColor=white)](https://www.oracle.com/database/)
 [![Tests](https://img.shields.io/badge/Testes-8%20aprovados-2EA44F)](#-testes)
 [![Swagger](https://img.shields.io/badge/Swagger-OpenAPI%203.0-85EA2D?logo=swagger&logoColor=black)](#-swagger--openapi)
+[![Serilog](https://img.shields.io/badge/Serilog-8.0.3-2B2B2B)](#-observabilidade-e-logs-com-serilog)
 [![Docker](https://img.shields.io/badge/Docker-Container-2496ED?logo=docker&logoColor=white)](#-docker)
 [![Render](https://img.shields.io/badge/Render-Live-46E3B7?logo=render&logoColor=black)](#-ambiente-publicado-no-render)
 
@@ -35,6 +36,7 @@
 - [⚙️ Como executar](#️-como-executar)
 - [🐳 Docker](#-docker)
 - [🌐 Ambiente publicado no Render](#-ambiente-publicado-no-render)
+- [📊 Observabilidade e logs com Serilog](#-observabilidade-e-logs-com-serilog)
 - [🧪 Testes](#-testes)
 - [🎬 Demonstração da API](#-demonstração-da-api)
 - [📌 Funcionalidades e escopo](#-funcionalidades-e-escopo)
@@ -63,7 +65,7 @@ O **StockPilot** é uma API REST para o cadastro e a consulta de **fornecedores*
 
 No cadastro de um fornecedor, o sistema consulta o **ViaCEP** para preencher cidade e estado a partir do CEP informado. A persistência utiliza **Oracle Database** com **Entity Framework Core**.
 
-A solução também demonstra autenticação com **JWT**, autorização por perfis, validação de dados, paginação, links de navegação (HATEOAS) e testes automatizados.
+A solução também demonstra autenticação com **JWT**, autorização por perfis, validação de dados, paginação, links de navegação (HATEOAS), **logging estruturado com Serilog** e testes automatizados. A aplicação está publicada no **Render** por meio de um contêiner Docker.
 
 ### Principais responsabilidades
 
@@ -74,7 +76,9 @@ A solução também demonstra autenticação com **JWT**, autorização por perf
 - Listar produtos com paginação;
 - Proteger operações utilizando JWT e os perfis `ADMIN` e `VIEWER`;
 - Tratar erros de negócio e exceções de forma consistente;
-- Persistir e consultar dados em um banco Oracle real.
+- Persistir e consultar dados em um banco Oracle real;
+- Registrar eventos e requisições HTTP com Serilog, acessíveis nos logs do Render;
+- Expor uma rota inicial informativa (`GET /`) com links para os recursos da API.
 
 ---
 
@@ -87,7 +91,7 @@ O projeto utiliza uma organização inspirada em **Clean Architecture**, separan
 | **StockPilot.Domain** | Entidades `Product` e `Supplier`, `BaseEntity` e exceções de domínio. |
 | **StockPilot.Application** | DTOs, contratos de repositório, serviços, validações de negócio, `OperationResult` e `PageResult`. |
 | **StockPilot.Infrastructure** | `StockPilotDbContext`, mapeamentos EF Core, migrations, repositórios Oracle, `UnitOfWork` e cliente ViaCEP. |
-| **StockPilot.API** | Controllers, configuração de JWT, Swagger/OpenAPI, tratamento global de exceções, injeção de dependências e endpoints HTTP. |
+| **StockPilot.API** | Controllers, configuração de JWT, Swagger/OpenAPI e Serilog, tratamento global de exceções, injeção de dependências e endpoints HTTP. |
 | **tests/** | Testes unitários com xUnit/Moq e testes de integração com `WebApplicationFactory`. |
 
 ### Diagrama de fluxo
@@ -114,7 +118,8 @@ StockPilot/
 ├── StockPilot.API/
 │   ├── Configurations/
 │   │   ├── JwtConfiguration.cs
-│   │   └── SwaggerConfiguration.cs
+│   │   ├── SwaggerConfiguration.cs
+│   │   └── SerilogConfiguration.cs
 │   ├── Controllers/
 │   │   ├── AuthController.cs
 │   │   ├── ProductsController.cs
@@ -165,7 +170,8 @@ O manifesto `.config/dotnet-tools.json` registra a ferramenta `dotnet-ef` utiliz
 - **JWT Bearer Authentication** e autorização por roles;
 - **HttpClient** com integração à API [ViaCEP](https://viacep.com.br/);
 - **Microsoft.Extensions.Http.Resilience / Polly** para Retry, Timeout e Circuit Breaker;
-- **Swagger / OpenAPI 3.0 com Swashbuckle.AspNetCore 6.6.2** e suporte ao botão **Authorize** com JWT Bearer;
+- **Swagger / OpenAPI 3.0 com Swashbuckle.AspNetCore 6.6.2**, comentários XML e suporte ao botão **Authorize** com JWT Bearer;
+- **Serilog.AspNetCore 8.0.3** para logs estruturados e monitoramento de requisições HTTP no console e no Render;
 - **xUnit**, **Moq**, **WebApplicationFactory** e **Coverlet**;
 - **JetBrains Rider**, **Git** e **GitHub**;
 - **Docker** para construção e execução em contêiner;
@@ -252,6 +258,14 @@ Authorization: Bearer <TOKEN_JWT>
 ---
 
 ## 📡 Endpoints
+
+### Página inicial
+
+| Método | Endpoint | Descrição | Acesso |
+|---|---|---|---|
+| `GET` | `/` | Retorna `200 OK` com nome, status informativo, ambiente e links da API. | Público |
+
+A rota raiz é informativa e utiliza `.ExcludeFromDescription()`, portanto **não aparece entre as operações listadas no Swagger**. O campo `status: "running"` confirma que a aplicação respondeu à requisição, mas não substitui uma verificação de saúde do banco de dados.
 
 ### Autenticação
 
@@ -383,7 +397,7 @@ A API também registra `AddProblemDetails` para tratamento padrão de erros não
 
 ## 📘 Swagger / OpenAPI
 
-O StockPilot possui **documentação interativa Swagger UI**, gerada pelo pacote `Swashbuckle.AspNetCore` **6.6.2**. A API publica o documento OpenAPI 3.0 e permite testar as seis rotas HTTP implementadas diretamente pelo navegador.
+O StockPilot possui **documentação interativa Swagger UI**, gerada pelo pacote `Swashbuckle.AspNetCore` **6.6.2**. A API publica o documento OpenAPI 3.0 e permite testar as **seis rotas de autenticação, produtos e fornecedores** diretamente pelo navegador. A rota informativa `GET /` não é incluída no Swagger.
 
 | Recurso | Ambiente local | Ambiente publicado (Render) |
 |---|---|---|
@@ -508,10 +522,10 @@ dotnet build
 dotnet run --project StockPilot.API --launch-profile http
 ```
 
-API local:
+API local (a rota raiz `GET /` responde com um JSON informativo):
 
 ```text
-http://localhost:5080
+http://localhost:5080/
 ```
 
 Swagger UI (habilitado em Development):
@@ -590,19 +604,88 @@ As configurações são registradas diretamente no painel **Environment** do Ren
 
 **As credenciais, senhas e a chave JWT não são versionadas no GitHub nem exibidas neste README.** A conexão Oracle depende de acessibilidade externa e de permissões no banco.
 
+### Página inicial da API
+
+A rota pública [`GET /`](https://cp5-stockpilot-dotnet.onrender.com/) responde com **HTTP `200 OK`** e um objeto JSON com informações da aplicação:
+
+```json
+{
+  "application": "StockPilot API",
+  "status": "running",
+  "environment": "Production",
+  "links": {
+    "swagger": "/swagger",
+    "openapi": "/swagger/v1/swagger.json",
+    "authentication": "/api/auth/login",
+    "products": "/api/products",
+    "supplierRegistration": "/api/suppliers"
+  }
+}
+```
+
+A rota é pública e foi implementada em `StockPilot.API/Program.cs`. Seu objetivo é apresentar os recursos disponíveis; **não é um endpoint de health check do Oracle**.
+
 ### Validação do ambiente publicado
 
-A publicação e a integração foram verificadas pelo **Swagger hospedado no Render**:
+A publicação e a integração foram verificadas no **ambiente hospedado no Render**:
 
 | Cenário testado | Resultado |
 |---|---|
+| Acesso à página inicial (`GET /`) | `200 OK` e informações públicas da aplicação. |
 | Consulta paginada de produtos com JWT (`GET /api/products?page=1&pageSize=10`) | `200 OK`, com registros do Oracle, metadados de paginação e links HATEOAS. |
 | Cadastro de fornecedor com perfil `ADMIN` (`POST /api/suppliers`) | `201 Created`, com cidade e UF preenchidas pela consulta ao ViaCEP. |
 | Tentativa de cadastro de fornecedor com perfil `VIEWER` | `403 Forbidden`, confirmando a restrição de autorização. |
+| Consulta local a `/api/products` sem token | `401 Unauthorized`, confirmando que a autenticação é exigida. |
+| Eventos HTTP registrados no Render | Serilog ativo em `Production`, com registros de requisições e duração. |
 
-A rota raiz `/` não possui um endpoint HTTP implementado e pode retornar **404**, o que não indica falha da API. Para explorar e testar os recursos, utilize o endereço público `/swagger`.
+Para explorar e testar os endpoints de negócio, utilize o endereço público `/swagger`. Os logs da aplicação podem ser inspecionados em **Render → Serviço → Logs**.
 
 No plano **Free**, a instância pode ser suspensa quando ficar inativa; a primeira requisição após um período de inatividade pode demorar mais para responder.
+
+---
+
+## 📊 Observabilidade e logs com Serilog
+
+O StockPilot utiliza **Serilog.AspNetCore 8.0.3** para gerar logs estruturados e facilitar o acompanhamento das requisições HTTP. A configuração fica em `StockPilot.API/Configurations/SerilogConfiguration.cs` e é registrada no `Program.cs` por `SerilogConfiguration.Configure(builder.Host)`.
+
+O middleware `app.UseSerilogRequestLogging()` produz um evento de resumo para as requisições que passam por ele, contendo método HTTP, rota, status e tempo de execução. O middleware foi posicionado após a configuração do Swagger e antes da autenticação; portanto, o registro resumido é voltado às rotas que atravessam essa parte do pipeline, como `/` e `/api/products`.
+
+### Configuração e informações registradas
+
+| Recurso | Comportamento |
+|---|---|
+| Nível mínimo | `Information`. |
+| Logs de `Microsoft` | Nível mínimo `Warning`, reduzindo ruído do framework. |
+| `Microsoft.Hosting.Lifetime` | `Information`, mostrando início e ambiente da aplicação. |
+| Contexto estruturado | `RequestId`, `ConnectionId` e outras propriedades do contexto de logs. |
+| Identificação | Propriedades `Application: StockPilot.API` e `Environment` (`Development`/`Production`). |
+| Requisições HTTP | Método, caminho, status e tempo de resposta em milissegundos. |
+| Destino dos logs | Saída padrão (console), coletada pelo Render. |
+| Arquivos de log | Não são utilizados pela configuração atual. |
+
+Exemplos de registros observados durante a validação local:
+
+```text
+[INF] HTTP GET / responded 200 in 17.2772 ms
+[INF] HTTP GET /api/products responded 401 in 3.1596 ms
+```
+
+O mesmo mecanismo foi confirmado no **Render em ambiente `Production`**, incluindo requisições à rota raiz. Os eventos estão disponíveis no painel do serviço em **Monitor → Logs**.
+
+### Como validar os logs
+
+Com a API local em execução:
+
+```bash
+curl -i http://localhost:5080/
+curl -i http://localhost:5080/api/products
+```
+
+O primeiro comando deverá retornar `200 OK`; o segundo retornará `401 Unauthorized` sem um JWT. Consulte o terminal da aplicação para observar os eventos do Serilog.
+
+Para conferir os registros em produção, acesse o [serviço StockPilot no Render](https://dashboard.render.com/web/srv-dbf472favr4c73cokn6g), abra **Logs** e faça uma requisição à [página inicial pública](https://cp5-stockpilot-dotnet.onrender.com/).
+
+> **Segurança:** a configuração atual não adiciona explicitamente corpos de requisição, senhas ou tokens JWT aos eventos de acesso HTTP. Evite registrar segredos em mensagens de log ao desenvolver novas funcionalidades. Os logs enviados ao console são gerenciados pela plataforma de hospedagem, sem persistência de arquivos configurada pela aplicação.
 
 ---
 
@@ -678,7 +761,7 @@ Sugestão de sequência para o vídeo acadêmico de até cinco minutos, utilizan
 | 3. Autenticação | Realizar `POST /api/auth/login`, obter o JWT e autorizar no Swagger. |
 | 4. Fornecedores | Executar `POST /api/suppliers` com CEP válido e demonstrar cidade e UF preenchidos via ViaCEP. |
 | 5. Produtos | Executar `POST /api/products` com o ID de fornecedor criado e consultar a listagem paginada. |
-| 6. Tratamento e testes | Mostrar rapidamente uma resposta `401` ou `403`, a configuração de resiliência e os oito testes aprovados com `dotnet test`. |
+| 6. Tratamento, logs e testes | Mostrar uma resposta `401` ou `403`, os logs do Serilog no Render, a resiliência do ViaCEP e os oito testes aprovados com `dotnet test`. |
 
 Na demonstração de POST, utilize **dados de exemplo**, com um endereço de e-mail ainda não cadastrado. Não exponha o conteúdo dos User Secrets, senhas de banco ou JWTs completos.
 
@@ -697,7 +780,9 @@ Na demonstração de POST, utilize **dados de exemplo**, com um endereço de e-m
 | Paginação e links HATEOAS em consultas de produtos | Implementado |
 | Erros de negócio, `OperationResult` e exceção de fornecedor | Implementado |
 | Testes unitários e de integração | 8 testes aprovados |
-| Swagger / OpenAPI 3.0 com JWT Bearer | Implementado e validado via navegador e HTTP 200 |
+| Swagger / OpenAPI 3.0 com JWT Bearer e documentação XML | Implementado e validado no Render |
+| Rota inicial `GET /` | Implementada; JSON informativo com HTTP 200 |
+| Serilog e logging HTTP estruturado | Implementado e validado localmente e no Render |
 | Docker | Dockerfile multi-stage e `.dockerignore` versionados |
 | Deploy no Render | Publicado; Swagger, consulta Oracle, ViaCEP e autorização por perfis validados |
 | Atualização/exclusão HTTP de produtos e fornecedores | Não implementado |
