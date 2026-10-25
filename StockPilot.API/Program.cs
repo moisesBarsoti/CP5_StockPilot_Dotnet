@@ -54,7 +54,28 @@ app.UseExceptionHandler(new ExceptionHandlerOptions
     AllowStatusCode404Response = true
 });
 
+
 app.MapControllers();
+
+app.MapGet("/", (IHostEnvironment environment) =>
+    {
+        return Results.Ok(new
+        {
+            application = "StockPilot API",
+            status = "running",
+            environment = environment.EnvironmentName,
+            links = new
+            {
+                swagger = "/swagger",
+                openapi = "/swagger/v1/swagger.json",
+                authentication = "/api/auth/login",
+                products = "/api/products",
+                supplierRegistration = "/api/suppliers"
+            }
+        });
+    })
+    .AllowAnonymous()
+    .ExcludeFromDescription();
 
 app.Run();
 
