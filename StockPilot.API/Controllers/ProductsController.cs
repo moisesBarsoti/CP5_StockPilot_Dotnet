@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StockPilot.Application.DTOs.Product;
@@ -17,8 +18,42 @@ public class ProductsController : ControllerBase
         _productService = productService;
     }
 
+    /// <summary>
+    /// Cadastra um novo produto no estoque.
+    /// </summary>
+    /// <remarks>
+    /// Cria um produto com nome, preço, quantidade em estoque
+    /// e identificação do fornecedor.
+    ///
+    /// O fornecedor informado deve existir no banco de dados.
+    ///
+    /// Operação permitida somente para usuários com perfil ADMIN.
+    /// </remarks>
+    /// <param name="request">
+    /// Informações necessárias para cadastrar o produto.
+    /// </param>
+    /// <response code="201">
+    /// Produto cadastrado com sucesso.
+    /// </response>
+    /// <response code="400">
+    /// Dados do produto inválidos.
+    /// </response>
+    /// <response code="401">
+    /// Usuário não autenticado.
+    /// </response>
+    /// <response code="403">
+    /// Usuário sem permissão para cadastrar produtos.
+    /// </response>
+    /// <response code="404">
+    /// Fornecedor informado não encontrado.
+    /// </response>
     [HttpPost]
     [Authorize(Roles = "ADMIN")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Create(
         [FromBody] ProductRequest request)
     {
@@ -39,7 +74,33 @@ public class ProductsController : ControllerBase
         );
     }
 
+    /// <summary>
+    /// Consulta um produto pelo identificador.
+    /// </summary>
+    /// <remarks>
+    /// Retorna as informações de um produto cadastrado no Oracle.
+    ///
+    /// A resposta inclui links HATEOAS para consultar o
+    /// próprio produto e acessar a coleção de produtos.
+    ///
+    /// Requer autenticação JWT.
+    /// </remarks>
+    /// <param name="id">
+    /// Identificador único do produto (GUID).
+    /// </param>
+    /// <response code="200">
+    /// Produto encontrado e retornado com links HATEOAS.
+    /// </response>
+    /// <response code="401">
+    /// Usuário não autenticado.
+    /// </response>
+    /// <response code="404">
+    /// Produto não encontrado.
+    /// </response>
     [HttpGet("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _productService.GetByIdAsync(id);
@@ -63,7 +124,39 @@ public class ProductsController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Lista os produtos com paginação.
+    /// </summary>
+    /// <remarks>
+    /// Consulta os produtos armazenados no Oracle Database.
+    ///
+    /// Retorna os registros da página solicitada, a quantidade
+    /// total de produtos, o total de páginas e links HATEOAS
+    /// para navegação entre as páginas.
+    ///
+    /// O tamanho de página permitido é de 1 a 100 registros.
+    ///
+    /// Requer autenticação JWT.
+    /// </remarks>
+    /// <param name="page">
+    /// Número da página solicitada. Valor padrão: 1.
+    /// </param>
+    /// <param name="pageSize">
+    /// Quantidade de registros por página. Valor padrão: 10.
+    /// </param>
+    /// <response code="200">
+    /// Listagem paginada retornada com sucesso.
+    /// </response>
+    /// <response code="400">
+    /// Parâmetros de paginação inválidos.
+    /// </response>
+    /// <response code="401">
+    /// Usuário não autenticado.
+    /// </response>
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetPaged(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
