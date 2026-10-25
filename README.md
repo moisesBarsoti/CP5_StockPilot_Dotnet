@@ -3,13 +3,15 @@
 # 📦 StockPilot API
 
 **API REST para gerenciamento de produtos, fornecedores e controle básico de estoque**  
-**ASP.NET Core 8 · Clean Architecture · Oracle Database · JWT · ViaCEP · Swagger/OpenAPI**
+**ASP.NET Core 8 · Clean Architecture · Oracle Database · JWT · ViaCEP · Swagger/OpenAPI · Docker · Render**
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![C%23](https://img.shields.io/badge/C%23-API-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
 [![Oracle](https://img.shields.io/badge/Oracle-Database-F80000?logo=oracle&logoColor=white)](https://www.oracle.com/database/)
 [![Tests](https://img.shields.io/badge/Testes-8%20aprovados-2EA44F)](#-testes)
 [![Swagger](https://img.shields.io/badge/Swagger-OpenAPI%203.0-85EA2D?logo=swagger&logoColor=black)](#-swagger--openapi)
+[![Docker](https://img.shields.io/badge/Docker-Container-2496ED?logo=docker&logoColor=white)](#-docker)
+[![Render](https://img.shields.io/badge/Render-Live-46E3B7?logo=render&logoColor=black)](#-ambiente-publicado-no-render)
 
 </div>
 
@@ -31,6 +33,8 @@
 - [📘 Swagger / OpenAPI](#-swagger--openapi)
 - [🗄️ Banco de dados e migrations](#️-banco-de-dados-e-migrations)
 - [⚙️ Como executar](#️-como-executar)
+- [🐳 Docker](#-docker)
+- [🌐 Ambiente publicado no Render](#-ambiente-publicado-no-render)
 - [🧪 Testes](#-testes)
 - [🎬 Demonstração da API](#-demonstração-da-api)
 - [📌 Funcionalidades e escopo](#-funcionalidades-e-escopo)
@@ -141,6 +145,8 @@ StockPilot/
 │   ├── StockPilot.UnitTests/
 │   └── StockPilot.IntegrationTests/
 ├── .config/dotnet-tools.json
+├── .dockerignore
+├── Dockerfile
 ├── .gitignore
 ├── global.json
 ├── StockPilot.sln
@@ -161,7 +167,9 @@ O manifesto `.config/dotnet-tools.json` registra a ferramenta `dotnet-ef` utiliz
 - **Microsoft.Extensions.Http.Resilience / Polly** para Retry, Timeout e Circuit Breaker;
 - **Swagger / OpenAPI 3.0 com Swashbuckle.AspNetCore 6.6.2** e suporte ao botão **Authorize** com JWT Bearer;
 - **xUnit**, **Moq**, **WebApplicationFactory** e **Coverlet**;
-- **JetBrains Rider**, **Git** e **GitHub**.
+- **JetBrains Rider**, **Git** e **GitHub**;
+- **Docker** para construção e execução em contêiner;
+- **Render** para hospedagem pública e deploy automático pelo GitHub.
 
 ---
 
@@ -210,7 +218,7 @@ O relacionamento é **1:N**. A FK usa `DeleteBehavior.Restrict`, evitando exclus
 
 A API utiliza tokens JWT assinados com **HMAC-SHA256**, emitidos pelo endpoint de login. O token tem validade de **1 hora** e é validado quanto à assinatura, emissor, audiência e expiração.
 
-Para a demonstração acadêmica, existem dois usuários configurados localmente via **User Secrets**. O endpoint de login está disponível apenas no ambiente **Development**.
+Para a demonstração acadêmica, existem dois usuários cujas senhas são configuradas via **User Secrets** no ambiente local ou variáveis de ambiente no Render. O endpoint de login está disponível em **Development** ou quando `DemoAuth__Enabled=true` é definido explicitamente, como no ambiente de demonstração publicado.
 
 | Usuário | Perfil | Permissões |
 |---|---|---|
@@ -249,7 +257,7 @@ Authorization: Bearer <TOKEN_JWT>
 
 | Método | Endpoint | Descrição | Acesso |
 |---|---|---|---|
-| `POST` | `/api/auth/login` | Autentica usuário de demonstração e retorna JWT. | Público, somente Development |
+| `POST` | `/api/auth/login` | Autentica usuário de demonstração e retorna JWT. | Público em Development ou quando habilitado por configuração no Render |
 
 ### Produtos
 
@@ -377,12 +385,12 @@ A API também registra `AddProblemDetails` para tratamento padrão de erros não
 
 O StockPilot possui **documentação interativa Swagger UI**, gerada pelo pacote `Swashbuckle.AspNetCore` **6.6.2**. A API publica o documento OpenAPI 3.0 e permite testar as seis rotas HTTP implementadas diretamente pelo navegador.
 
-| Recurso | Endereço local |
-|---|---|
-| Swagger UI | [`http://localhost:5080/swagger`](http://localhost:5080/swagger) |
-| Documento OpenAPI JSON | [`http://localhost:5080/swagger/v1/swagger.json`](http://localhost:5080/swagger/v1/swagger.json) |
+| Recurso | Ambiente local | Ambiente publicado (Render) |
+|---|---|---|
+| Swagger UI | [`http://localhost:5080/swagger`](http://localhost:5080/swagger) | [`https://cp5-stockpilot-dotnet.onrender.com/swagger`](https://cp5-stockpilot-dotnet.onrender.com/swagger) |
+| Documento OpenAPI JSON | [`http://localhost:5080/swagger/v1/swagger.json`](http://localhost:5080/swagger/v1/swagger.json) | [`https://cp5-stockpilot-dotnet.onrender.com/swagger/v1/swagger.json`](https://cp5-stockpilot-dotnet.onrender.com/swagger/v1/swagger.json) |
 
-A configuração está em `StockPilot.API/Configurations/SwaggerConfiguration.cs`, registrada no `Program.cs` por `AddStockPilotSwagger()`. O Swagger UI e o JSON **são expostos somente no ambiente `Development`**. Ambos foram acessados com retorno HTTP `200` na execução local.
+A configuração está em `StockPilot.API/Configurations/SwaggerConfiguration.cs`, registrada no `Program.cs` por `AddStockPilotSwagger()`. O Swagger está disponível em **Development** e pode ser habilitado em outro ambiente pela configuração `Swagger__Enabled=true`. O ambiente publicado no Render está em **Production**, com Swagger habilitado para demonstração. A documentação XML dos Controllers também é carregada e exibida no Swagger público.
 
 ### Como testar pelo Swagger
 
@@ -394,7 +402,7 @@ A configuração está em `StockPilot.API/Configurations/SwaggerConfiguration.cs
 6. Execute `GET /api/products?page=1&pageSize=10` para ver os produtos armazenados no Oracle e os links HATEOAS.
 7. Opcionalmente, execute `POST /api/suppliers` com um CEP válido para demonstrar a consulta ao ViaCEP e depois `POST /api/products` usando o ID do fornecedor criado.
 
-> **Segurança:** embora o Swagger exiba cadeados ao lado das operações devido à definição global do esquema Bearer, o endpoint `/api/auth/login` é público por usar `[AllowAnonymous]`. O login de demonstração só funciona em `Development`. Não compartilhe credenciais nem tokens JWT válidos na gravação.
+> **Segurança:** embora o Swagger exiba cadeados ao lado das operações devido à definição global do esquema Bearer, o endpoint `/api/auth/login` é público por usar `[AllowAnonymous]`. O login de demonstração está habilitado no Render por configuração específica, mesmo com o ambiente em `Production`. Não compartilhe credenciais nem tokens JWT válidos na gravação. Após a avaliação, desabilite o login demonstrativo e o Swagger público se não forem mais necessários.
 
 ---
 
@@ -516,6 +524,88 @@ http://localhost:5080/swagger
 
 ---
 
+## 🐳 Docker
+
+O StockPilot possui um `Dockerfile` na raiz da solução, com **multi-stage build**: a etapa de compilação utiliza o SDK do .NET 8 e a imagem final utiliza somente o runtime ASP.NET Core 8. O arquivo `.dockerignore` exclui arquivos temporários, configurações locais e possíveis segredos do contexto de construção.
+
+### Construir a imagem
+
+A partir da raiz do repositório:
+
+```bash
+docker build -t stockpilot-api .
+```
+
+### Executar localmente em contêiner
+
+O contêiner utiliza a porta `10000` e configura a aplicação para escutar em `0.0.0.0`, permitindo acesso externo ao processo no contêiner.
+
+Crie um arquivo `.env` **somente no seu computador**, com os mesmos nomes das variáveis descritas na seção de Render, e preencha as credenciais válidas. Esse arquivo está excluído do versionamento.
+
+```bash
+docker run --rm -p 10000:10000 --env-file .env stockpilot-api
+```
+
+Endereço da API no Docker local: `http://localhost:10000`. Para utilizar o Swagger no contêiner, mantenha `Swagger__Enabled=true` no `.env`.
+
+---
+
+## 🌐 Ambiente publicado no Render
+
+O **StockPilot API está publicado no Render**, utilizando Docker e conectado ao repositório GitHub. Os novos commits na branch `main` iniciam automaticamente um deploy.
+
+| Recurso | Endereço |
+|---|---|
+| **API pública** | [`https://cp5-stockpilot-dotnet.onrender.com`](https://cp5-stockpilot-dotnet.onrender.com) |
+| **Swagger / OpenAPI** | [`https://cp5-stockpilot-dotnet.onrender.com/swagger`](https://cp5-stockpilot-dotnet.onrender.com/swagger) |
+| **Documento OpenAPI JSON** | [`https://cp5-stockpilot-dotnet.onrender.com/swagger/v1/swagger.json`](https://cp5-stockpilot-dotnet.onrender.com/swagger/v1/swagger.json) |
+
+### Configuração da publicação
+
+| Configuração | Valor |
+|---|---|
+| Plataforma | Render — Web Service |
+| Runtime | Docker |
+| Plano | Free |
+| Repositório | [`moisesBarsoti/CP5_StockPilot_Dotnet`](https://github.com/moisesBarsoti/CP5_StockPilot_Dotnet) |
+| Branch | `main` |
+| Dockerfile | `./Dockerfile` |
+| Porta HTTP | `10000` |
+| Ambiente ASP.NET Core | `Production` |
+| Deploy | Automático após novos commits |
+
+### Variáveis de ambiente
+
+As configurações são registradas diretamente no painel **Environment** do Render. O ASP.NET Core interpreta `__` como separador de configuração aninhada.
+
+| Variável | Finalidade |
+|---|---|
+| `ASPNETCORE_ENVIRONMENT` | Ambiente `Production`. |
+| `ConnectionStrings__OracleConnection` | Conexão ao Oracle Database. |
+| `Jwt__Key` | Chave de assinatura JWT codificada em Base64. |
+| `DemoAuth__Enabled` | Habilita explicitamente o login de demonstração no Render. |
+| `DemoAuth__AdminPassword` | Senha do perfil de demonstração `ADMIN`. |
+| `DemoAuth__ViewerPassword` | Senha do perfil de demonstração `VIEWER`. |
+| `Swagger__Enabled` | Habilita a documentação Swagger em Production para demonstração. |
+
+**As credenciais, senhas e a chave JWT não são versionadas no GitHub nem exibidas neste README.** A conexão Oracle depende de acessibilidade externa e de permissões no banco.
+
+### Validação do ambiente publicado
+
+A publicação e a integração foram verificadas pelo **Swagger hospedado no Render**:
+
+| Cenário testado | Resultado |
+|---|---|
+| Consulta paginada de produtos com JWT (`GET /api/products?page=1&pageSize=10`) | `200 OK`, com registros do Oracle, metadados de paginação e links HATEOAS. |
+| Cadastro de fornecedor com perfil `ADMIN` (`POST /api/suppliers`) | `201 Created`, com cidade e UF preenchidas pela consulta ao ViaCEP. |
+| Tentativa de cadastro de fornecedor com perfil `VIEWER` | `403 Forbidden`, confirmando a restrição de autorização. |
+
+A rota raiz `/` não possui um endpoint HTTP implementado e pode retornar **404**, o que não indica falha da API. Para explorar e testar os recursos, utilize o endereço público `/swagger`.
+
+No plano **Free**, a instância pode ser suspensa quando ficar inativa; a primeira requisição após um período de inatividade pode demorar mais para responder.
+
+---
+
 ## 🧪 Testes
 
 A solução contém **dois projetos de testes**:
@@ -608,6 +698,8 @@ Na demonstração de POST, utilize **dados de exemplo**, com um endereço de e-m
 | Erros de negócio, `OperationResult` e exceção de fornecedor | Implementado |
 | Testes unitários e de integração | 8 testes aprovados |
 | Swagger / OpenAPI 3.0 com JWT Bearer | Implementado e validado via navegador e HTTP 200 |
+| Docker | Dockerfile multi-stage e `.dockerignore` versionados |
+| Deploy no Render | Publicado; Swagger, consulta Oracle, ViaCEP e autorização por perfis validados |
 | Atualização/exclusão HTTP de produtos e fornecedores | Não implementado |
 | Contas reais persistidas e autenticação de produção | Não implementado |
 
