@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using StockPilot.Infrastructure.Data;
+using StockPilot.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<StockPilotDbContext>(options => options.UseOracle(
         oracleOptions.MigrationsHistoryTable("TB_STOCKPILOT_MIGRATIONS"))
 );
 
+builder.Services.AddStockPilotServices();
 
 var app = builder.Build();
 
