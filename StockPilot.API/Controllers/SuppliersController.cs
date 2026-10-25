@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using StockPilot.Application.DTOs.Supplier;
 using StockPilot.Application.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace StockPilot.API.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/suppliers")]
 public class SuppliersController : ControllerBase
 {
@@ -16,6 +18,7 @@ public class SuppliersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> Create(
         [FromBody] SupplierRequest request)
     {
