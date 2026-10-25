@@ -11,7 +11,11 @@ var connectionString = builder.Configuration
                            "A connection string 'OracleConnection' não foi encontrada."
                        );
 
-builder.Services.AddDbContext<StockPilotDbContext>(options => options.UseOracle(connectionString));
+
+builder.Services.AddDbContext<StockPilotDbContext>(options => options.UseOracle(connectionString, oracleOptions =>
+        oracleOptions.MigrationsHistoryTable("TB_STOCKPILOT_MIGRATIONS"))
+);
+
 
 var app = builder.Build();
 
