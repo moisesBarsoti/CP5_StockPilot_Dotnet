@@ -1,5 +1,32 @@
-bin/
-obj/
-/packages/
-riderModule.iml
-/_ReSharper.Caches/
+
+# .NET
+**/bin/
+**/obj/
+**/packages/
+**/TestResults/
+
+# JetBrains Rider
+.idea/
+*.iml
+*.DotSettings.user
+_ReSharper.Caches/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Visual Studio Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets.json
+
+# Logs
+*.log
