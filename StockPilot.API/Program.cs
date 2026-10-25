@@ -37,11 +37,14 @@ builder.Services.AddStockPilotSwagger();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+
+if (app.Environment.IsDevelopment() ||
+    app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 
 app.UseAuthentication();
 app.UseAuthorization();
