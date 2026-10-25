@@ -30,9 +30,13 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
-        // Contas de demonstração disponíveis somente em Development.
-        if (!_environment.IsDevelopment())
+        
+        if (!_environment.IsDevelopment() &&
+            !_configuration.GetValue<bool>("DemoAuth:Enabled"))
+        {
             return NotFound();
+        }
+
 
         var username = request.Username.Trim().ToLowerInvariant();
 
