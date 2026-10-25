@@ -1,0 +1,17 @@
+
+**/bin/
+**/obj/
+**/TestResults/
+
+.git/
+.idea/
+.vs/
+tests/
+
+.env
+.env.*
+**/secrets.json
+
+*.user
+*.suo
+.DS_Store
