@@ -2,10 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using StockPilot.Infrastructure.Data;
 using StockPilot.API.Extensions;
 using Microsoft.AspNetCore.Diagnostics;
+using Serilog;
 using StockPilot.API.Exceptions;
 using StockPilot.API.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
+
+SerilogConfiguration.Configure(builder.Host);
 
 builder.Services.AddControllers();
 
@@ -45,6 +48,7 @@ if (app.Environment.IsDevelopment() ||
     app.UseSwaggerUI();
 }
 
+app.UseSerilogRequestLogging();
 
 app.UseAuthentication();
 app.UseAuthorization();
