@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using StockPilot.Infrastructure.Data;
 using StockPilot.API.Extensions;
+using Microsoft.AspNetCore.Diagnostics;
+using StockPilot.API.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,13 +15,26 @@ var connectionString = builder.Configuration
                        );
 
 
+
 builder.Services.AddDbContext<StockPilotDbContext>(options => options.UseOracle(connectionString, oracleOptions =>
-        oracleOptions.MigrationsHistoryTable("TB_STOCKPILOT_MIGRATIONS"))
+    {
+        oracleOptions.UseOracleSQLCompatibility(OracleSQLCompatibility.DatabaseVersion19);
+
+        oracleOptions.MigrationsHistoryTable("TB_STOCKPILOT_MIGRATIONS");
+    })
 );
 
+
 builder.Services.AddStockPilotServices();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    AllowStatusCode404Response = true
+});
 
 app.MapControllers();
 
