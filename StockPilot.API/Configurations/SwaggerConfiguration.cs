@@ -31,6 +31,15 @@ public static class SwaggerConfiguration
                         "Informe somente o token JWT gerado no login."
                 }
             );
+            
+            var xmlFile = $"{typeof(SwaggerConfiguration).Assembly.GetName().Name}.xml";
+
+            var xmlPath = Path.Combine(
+                AppContext.BaseDirectory,
+                xmlFile
+            );
+
+            options.IncludeXmlComments(xmlPath);
 
             options.AddSecurityRequirement(
                 new OpenApiSecurityRequirement
